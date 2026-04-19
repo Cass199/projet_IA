@@ -5,21 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Interview Application</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header>
-      <h1>Interview métier</h1>
-    </header>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="header">
+        <h1 class="title">Interview métier</h1>
+        <div class="subtitle muted">8 étapes — une seule visible à la fois</div>
+      </header>
 
-    <main>
-      <p id="intro">Cet outil transforme les réponses d'un professionnel en une fiche métier structurée, prête à être consultée ou exportée.</p>
-      <p>
-        <button type="button" id="start-interview" aria-describedby="intro">Commencer l’entretien</button>
-      </p>
-    </main>
+      <main class="layout">
+        <section id="intro-screen" class="stack">
+          <p id="intro">Cet outil transforme les réponses d'un professionnel en une fiche métier structurée, prête à être consultée ou exportée.</p>
+          <div class="controls">
+            <button type="button" id="start-interview" class="btn btn-primary" aria-describedby="intro">Commencer l’entretien</button>
+            <button type="button" id="skip-intro" class="btn btn-ghost">Voir le formulaire</button>
+          </div>
+        </section>
 
-    <footer>
-      <p>© 2026 Job Interview App</p>
-    </footer>
+        <form id="application-form" class="form" aria-live="polite" hidden>
+          <div id="progress" class="muted">Étape <span id="current-step">1</span> / 8</div>
+
+          <!-- Step 1: Identification -->
+          <fieldset class="step" data-step="1">
+            <legend>Identification</legend>
+            <label for="name">Nom complet</label>
+            <input id="name" name="name" type="text" required>
+
+            <label for="role">Rôle / poste actuel</label>
+            <input id="role" name="role" type="text">
+
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email">
+
+            <label for="location">Localisation</label>
+            <input id="location" name="location" type="text">
+          </fieldset>
+
+          <!-- Step 2: Activités -->
+          <fieldset class="step" data-step="2" hidden>
+            <legend>Activités</legend>
+            <label for="daily">Activités quotidiennes (résumé)</label>
+            <textarea id="daily" name="daily" placeholder="Décrivez une journée type..."></textarea>
+
+            <label for="main-tasks">Tâches principales</label>
+            <textarea id="main-tasks" name="main-tasks" placeholder="Listez les tâches clés..."></textarea>
+          </fieldset>
+
+          <!-- Step 3: Compétences -->
+          <fieldset class="step" data-step="3" hidden>
+            <legend>Compétences</legend>
+            <label for="hard-skills">Compétences techniques</label>
+            <textarea id="hard-skills" name="hard-skills"></textarea>
+
+            <label for="soft-skills">Compétences comportementales</label>
+            <textarea id="soft-skills" name="soft-skills"></textarea>
+
+            <label for="level">Niveau typique</label>
+            <select id="level" name="level">
+              <option value="">-- Sélectionnez --</option>
+              <option>Junior</option>
+              <option>Confirmé</option>
+              <option>Sénior</option>
+              <option>Expert</option>
+            </select>
+          </fieldset>
+
+          <!-- Step 4: Outils et environnement -->
+          <fieldset class="step" data-step="4" hidden>
+            <legend>Outils et environnement</legend>
+            <label for="tools">Outils et logiciels utilisés</label>
+            <textarea id="tools" name="tools"></textarea>
+
+            <label for="work-env">Environnement de travail</label>
+            <select id="work-env" name="work-env">
+              <option value="">-- Sélectionnez --</option>
+              <option>Présentiel</option>
+              <option>Distanciel</option>
+              <option>Hybride</option>
+            </select>
+
+            <label for="tech-stack">Stack technique (si applicable)</label>
+            <input id="tech-stack" name="tech-stack" type="text">
+          </fieldset>
+
+          <!-- Step 5: Accès au métier -->
+          <fieldset class="step" data-step="5" hidden>
+            <legend>Accès au métier</legend>
+            <label for="education">Formation requise</label>
+            <textarea id="education" name="education"></textarea>
+
+            <label for="certs">Certifications utiles</label>
+            <input id="certs" name="certs" type="text">
+
+            <label for="career-path">Parcours professionnel typique</label>
+            <textarea id="career-path" name="career-path"></textarea>
+          </fieldset>
+
+          <!-- Step 6: Difficultés -->
+          <fieldset class="step" data-step="6" hidden>
+            <legend>Difficultés</legend>
+            <label for="challenges">Principales difficultés</label>
+            <textarea id="challenges" name="challenges"></textarea>
+
+            <label for="common-mistakes">Erreurs fréquentes</label>
+            <textarea id="common-mistakes" name="common-mistakes"></textarea>
+          </fieldset>
+
+          <!-- Step 7: Valeur et projection -->
+          <fieldset class="step" data-step="7" hidden>
+            <legend>Valeur et projection</legend>
+            <label for="value">Valeur apportée (au business/produit)</label>
+            <textarea id="value" name="value"></textarea>
+
+            <label for="kpis">Indicateurs / résultats attendus</label>
+            <input id="kpis" name="kpis" type="text">
+
+            <label for="growth">Évolution possible / projection</label>
+            <textarea id="growth" name="growth"></textarea>
+          </fieldset>
+
+          <!-- Step 8: Anecdote -->
+          <fieldset class="step" data-step="8" hidden>
+            <legend>Anecdote</legend>
+            <label for="anecdote">Anecdote courte ou cas marquant</label>
+            <textarea id="anecdote" name="anecdote"></textarea>
+
+            <label for="publish">Autorisation de publication (anonyme)</label>
+            <select id="publish" name="publish">
+              <option value="">-- Sélectionnez --</option>
+              <option value="yes">Oui</option>
+              <option value="no">Non</option>
+            </select>
+          </fieldset>
+
+          <div class="controls">
+            <button type="button" id="prev-btn" class="btn btn-ghost" disabled>Précédent</button>
+            <button type="button" id="next-btn" class="btn btn-primary">Suivant</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary" hidden>Envoyer</button>
+          </div>
+        </form>
+
+        <section id="result" hidden class="card"></section>
+      </main>
+
+      <footer class="footer">
+        <div class="muted">© 2026 Job Interview App</div>
+        <div class="muted">Fait avec soin</div>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
   </body>
 </html>
