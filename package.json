@@ -1,0 +1,24 @@
+{
+  "name": "job-interview-app",
+  "version": "1.0.0",
+  "description": "This is a simple web application for job interview applications. It allows users to fill out a form to submit their job interview details and displays the results dynamically.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cass199/projet_IA.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Cass199/projet_IA/issues"
+  },
+  "homepage": "https://github.com/Cass199/projet_IA#readme",
+  "devDependencies": {
+    "puppeteer": "^24.42.0"
+  }
+}

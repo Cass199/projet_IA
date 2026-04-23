@@ -19,11 +19,17 @@
           <div class="controls">
             <button type="button" id="start-interview" class="btn btn-primary" aria-describedby="intro">Commencer l’entretien</button>
             <button type="button" id="skip-intro" class="btn btn-ghost">Voir le formulaire</button>
+            <button type="button" id="reset-btn" class="btn btn-ghost">Réinitialiser</button>
           </div>
         </section>
 
         <form id="application-form" class="form" aria-live="polite" hidden>
-          <div id="progress" class="muted">Étape <span id="current-step">1</span> / 8</div>
+          <div id="progress" class="muted">
+            <div class="progress-info">Étape <span id="current-step">1</span> / <span id="total-steps">8</span></div>
+            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
 
           <!-- Step 1: Identification -->
           <fieldset class="step" data-step="1">
@@ -32,7 +38,10 @@
             <input id="name" name="name" type="text" required>
 
             <label for="role">Rôle / poste actuel</label>
-            <input id="role" name="role" type="text">
+            <input id="role" name="role" type="text" required>
+
+            <label for="experience">Années d'expérience</label>
+            <input id="experience" name="experience" type="number" min="0" step="1" placeholder="0" required>
 
             <label for="email">Email</label>
             <input id="email" name="email" type="email">
@@ -48,14 +57,14 @@
             <textarea id="daily" name="daily" placeholder="Décrivez une journée type..."></textarea>
 
             <label for="main-tasks">Tâches principales</label>
-            <textarea id="main-tasks" name="main-tasks" placeholder="Listez les tâches clés..."></textarea>
+            <textarea id="main-tasks" name="main-tasks" placeholder="Listez les tâches clés..." required></textarea>
           </fieldset>
 
           <!-- Step 3: Compétences -->
           <fieldset class="step" data-step="3" hidden>
             <legend>Compétences</legend>
             <label for="hard-skills">Compétences techniques</label>
-            <textarea id="hard-skills" name="hard-skills"></textarea>
+            <textarea id="hard-skills" name="hard-skills" required></textarea>
 
             <label for="soft-skills">Compétences comportementales</label>
             <textarea id="soft-skills" name="soft-skills"></textarea>
@@ -105,7 +114,7 @@
           <fieldset class="step" data-step="6" hidden>
             <legend>Difficultés</legend>
             <label for="challenges">Principales difficultés</label>
-            <textarea id="challenges" name="challenges"></textarea>
+            <textarea id="challenges" name="challenges" required></textarea>
 
             <label for="common-mistakes">Erreurs fréquentes</label>
             <textarea id="common-mistakes" name="common-mistakes"></textarea>
@@ -138,11 +147,7 @@
             </select>
           </fieldset>
 
-          <div class="controls">
-            <button type="button" id="prev-btn" class="btn btn-ghost" disabled>Précédent</button>
-            <button type="button" id="next-btn" class="btn btn-primary">Suivant</button>
-            <button type="submit" id="submit-btn" class="btn btn-primary" hidden>Envoyer</button>
-          </div>
+          <!-- Per-step controls are injected by JavaScript inside each .step -->
         </form>
 
         <section id="result" hidden class="card"></section>
@@ -154,6 +159,6 @@
       </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>
