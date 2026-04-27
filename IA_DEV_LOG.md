@@ -398,6 +398,41 @@ Journal des actions réalisées avec l'aide de Copilot dans VS Code.
 ### Prochaine étape
 - Tester le lien depuis la page d'accueil et ajuster l'apparence si besoin.
 
+## [2026-04-27 11:50]
+
+### Objectif
+- Permettre la suppression des fiches publiées via l'interface publique.
+
+### Fichiers modifiés
+- `server.js` : ajout de `DELETE /api/submissions/:id` pour supprimer une fiche.
+- `js/published.js` : ajout des boutons "Supprimer" dans la liste et la vue détail.
+
+### Résumé
+- L'administrateur (ou toute personne ayant accès à l'interface) peut désormais supprimer une fiche. La suppression supprime le fichier JSON correspondant dans `submissions/`.
+
+### Remarque
+- Il n'y a pas d'authentification sur cette action ; en environnement de production, ajoutez une protection (auth/modération) avant suppression.
+
+## [2026-04-27 12:05]
+
+### Objectif
+- Ajouter un contrôle d'accès basique pour protéger les actions sensibles (suppression).
+
+### Fichiers modifiés
+- `server.js` : ajout d'une vérification Basic Auth via `ADMIN_USER` / `ADMIN_PASS` pour l'endpoint DELETE.
+- `js/published.js` : ajout d'un petit panneau de connexion admin (prompt) stockant le token en `sessionStorage`; les boutons "Supprimer" ne s'affichent que lorsque connecté.
+
+### Résumé
+- La suppression est maintenant protégée par une authentification basique. Configurez `ADMIN_USER` et `ADMIN_PASS` dans `.env` pour activer le contrôle.
+
+### Prochaine étape
+- (Recommandé) Ajouter une page d'administration avec formulaire de connexion sécurisé et TLS en production.
+
+
+### Prochaine étape
+- Ajouter authentification ou confirmation côté serveur si nécessaire.
+
+
 
 
 

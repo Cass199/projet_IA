@@ -27,6 +27,18 @@ if (!fs.existsSync(SUBMISSIONS_DIR)) {
   fs.mkdirSync(SUBMISSIONS_DIR, { recursive: true });
 }
 
+// Basic admin auth: use ADMIN_USER and ADMIN_PASS from env
+function checkAdminAuth(req) {
+  const adminUser = process.env.ADMIN_USER;
+  const adminPass = process.env.ADMIN_PASS;
+  if (!adminUser || !adminPass) return true; // no admin configured -> allow (dev)
+  const auth = req.headers['authorization'];
+  if (!auth || !auth.startsWith('Basic ')) return false;
+  const payload = Buffer.from(auth.split(' ')[1], 'base64').toString('utf8');
+  const [user, pass] = payload.split(':');
+  return user === adminUser && pass === adminPass;
+}
+
 function getTransport() {
   const host = process.env.SMTP_HOST;
   const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
@@ -131,6 +143,28 @@ app.get('/api/submissions/:id', (req, res) => {
     const obj = JSON.parse(raw);
     return res.json(obj);
   } catch (err) {
+    return res.status(500).json({ error: String(err) });
+  }
+});
+
+// API: delete a submission
+app.delete('/api/submissions/:id', (req, res) => {
+  try {
+    const id = req.params.id;
+    // require admin auth
+    if (!checkAdminAuth(req)) {
+      res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // basic validation to avoid path traversal
+    if (!/^[0-9A-Za-z-]+$/.test(id)) return res.status(400).json({ error: 'Invalid id' });
+    const file = path.join(SUBMISSIONS_DIR, `${id}.json`);
+    if (!fs.existsSync(file)) return res.status(404).json({ error: 'Not found' });
+    fs.unlinkSync(file);
+    console.log('Deleted submission', id);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Delete submission error', err && err.stack ? err.stack : err);
     return res.status(500).json({ error: String(err) });
   }
 });
