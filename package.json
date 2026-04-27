@@ -4,7 +4,9 @@
   "description": "This is a simple web application for job interview applications. It allows users to fill out a form to submit their job interview details and displays the results dynamically.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:e2e": "node tests/e2e.js"
   },
   "repository": {
     "type": "git",
@@ -20,5 +22,10 @@
   "homepage": "https://github.com/Cass199/projet_IA#readme",
   "devDependencies": {
     "puppeteer": "^24.42.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "nodemailer": "^8.0.6"
   }
 }

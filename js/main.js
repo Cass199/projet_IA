@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (progressFill) progressFill.style.width = '0%';
 
   // inject per-step controls
-  attachControls(steps, showStep, validateStep, form);
+  // per-step controls will be injected after we define showStepWrapper
 
   // load saved draft and bind fields
   const loaded = loadFromStorage(form);
@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     current = idx;
     showStep(steps, idx, { currentStepEl, totalStepsEl, progressFill });
   }
+
+  // inject per-step controls now that showStepWrapper is available
+  attachControls(steps, showStepWrapper, validateStep, form, { currentStepEl, totalStepsEl, progressFill });
 
   // Form submit: render sheet and controls
   form.addEventListener('submit', (e) => {
@@ -120,6 +123,29 @@ document.addEventListener('DOMContentLoaded', () => {
     ctrl.appendChild(restartBtn);
 
     resultSection.appendChild(ctrl);
+    // Send confirmation emails (owner + participant if email provided)
+    (async () => {
+      try {
+        const md = generateMarkdown(formData);
+        const html = sheet.outerHTML;
+        const payload = { to: formData.email || null, data: formData, markdown: md, html };
+        const resp = await fetch('/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          showToast('Confirmation par e-mail envoyée (si adresse fournie)');
+        } else {
+          const json = await resp.json().catch(() => ({}));
+          console.warn('Email API error', json);
+          showToast('Envoi e-mail échoué — voir console pour détails');
+        }
+      } catch (err) {
+        console.warn('Error sending email', err);
+        showToast('Envoi e-mail échoué');
+      }
+    })();
   });
 
   // Start / skip

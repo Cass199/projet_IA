@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-  const url = 'http://127.0.0.1:8000';
+  const url = process.env.APP_URL || 'http://127.0.0.1:3000';
   let browser = null;
   try {
     browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -13,10 +13,13 @@ const puppeteer = require('puppeteer');
     await page.waitForSelector('#start-interview');
     await page.click('#start-interview');
 
+    // small sleep helper for Puppeteer API compatibility
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
     // Helper: fill required fields in the currently visible step and click primary button
     for (let step = 0; step < 10; step++) {
       // give UI a moment
-      await page.waitForTimeout(250);
+      await sleep(250);
       const advanced = await page.evaluate(() => {
         const steps = Array.from(document.querySelectorAll('.step'));
         const cur = steps.find(s => !s.hidden);
@@ -40,11 +43,18 @@ const puppeteer = require('puppeteer');
 
         // find primary button inside current step (Suivant / Terminer)
         const btn = cur.querySelector('.btn-primary');
-        if (btn) { btn.click(); return true; }
+        if (btn) {
+          btn.click();
+          // return current step indicator for debugging
+          const cs = document.getElementById('current-step');
+          return cs ? cs.textContent : null;
+        }
         return false;
       });
       // if no advance button found, break
       if (!advanced) break;
+      // log current step value captured from page
+      console.log('E2E: after click, current-step:', advanced);
     }
 
     // Wait for result screen

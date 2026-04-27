@@ -69,7 +69,7 @@ export function validateStep(steps, index) {
   return ok;
 }
 
-export function attachControls(steps, showStepFn, validateStepFn, form) {
+export function attachControls(steps, showStepFn, validateStepFn, form, elements = {}) {
   steps.forEach((stepEl, i) => {
     if (stepEl.querySelector('.step-controls')) return;
     const ctrl = document.createElement('div');
@@ -84,7 +84,11 @@ export function attachControls(steps, showStepFn, validateStepFn, form) {
       if (i > 0) {
         const curControls = Array.from(steps[i].querySelectorAll('input,textarea,select'));
         curControls.forEach(clearError);
-        showStepFn(steps, i - 1);
+        // Call showStepFn with compatible signature: either (steps, index, elements) or (index, elements)
+        if (typeof showStepFn === 'function') {
+          if (showStepFn.length >= 3) showStepFn(steps, i - 1, elements);
+          else showStepFn(i - 1, elements);
+        }
       }
     });
     if (i === 0) prev.disabled = true;
@@ -97,7 +101,10 @@ export function attachControls(steps, showStepFn, validateStepFn, form) {
       next.textContent = 'Suivant';
       next.addEventListener('click', () => {
         if (!validateStepFn(steps, i)) return;
-        showStepFn(steps, i + 1);
+        if (typeof showStepFn === 'function') {
+          if (showStepFn.length >= 3) showStepFn(steps, i + 1, elements);
+          else showStepFn(i + 1, elements);
+        }
       });
       ctrl.appendChild(next);
     } else {

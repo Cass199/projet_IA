@@ -290,26 +290,117 @@ Journal des actions réalisées avec l'aide de Copilot dans VS Code.
 ## [2026-04-22 14:50]
 
 ### Objectif
-- Améliorer l'expérience utilisateur (espacement, hiérarchie visuelle, boutons, erreurs, transitions, responsive).
 
 ### Fichiers modifiés
-- style.css
-- script.js
-- IA_DEV_LOG.md
 
 ### Changements effectués
-- `style.css` : ajustements d'espacement (`.app-container`, `.layout`, `.card`), boutons plus visibles et accessibles (`.btn`, `.btn-primary`, `.btn-ghost`), styles d'erreur renforcés (`.error-text`, `.input-error`), bloc résumé mis en valeur (`.job-summary`), et styles `.job-sheet` améliorés pour une lecture confortable. Ajout de styles de transition pour `.step` et améliorations responsive.
-- `script.js` : showStep() maintenant gère la visibilité par classes (`.active`) pour permettre des transitions CSS discrètes entre étapes; les étapes sont pré-préparées au chargement pour que les animations fonctionnent.
 
 ### Décisions prises
-- Utiliser des transitions CSS légères pour les changements d'étape, garder la logique métier inchangée.
-- Renforcer la lisibilité mobile par ajustements de padding et tailles de titres.
 
 ### Problèmes rencontrés
-- Aucun.
 
 ### Prochaine étape
-- Tester le parcours complet sur mobile et desktop et affiner les timings/espacements si besoin.
+
+
+## [2026-04-27 08:40]
+
+### Objectif
+- Résoudre l'échec d'envoi d'e-mails lors de la soumission du formulaire.
+
+### Fichiers modifiés
+- server.js
+
+### Changements effectués
+- `server.js` :
+	- Suppression du rejet systématique si `OWNER_EMAIL` n'est pas configuré (le serveur passe désormais outre et continue l'envoi pour le participant si l'email est fourni).
+	- Fallback de développement : si la configuration SMTP est absente, le serveur crée un compte Ethereal (`nodemailer.createTestAccount`) et envoie les messages en mode test, retournant les URLs de prévisualisation dans la réponse JSON.
+	- Logs améliorés pour tracer les requêtes `POST /send` et les erreurs côté serveur.
+
+### Décisions prises
+- En environnement de développement, préférer un fallback non bloquant (Ethereal) pour permettre le flux complet sans SMTP. En production, configurer un SMTP réel via variables d'environnement.
+
+### Problèmes rencontrés
+- Sans `OWNER_EMAIL` configuré, le propriétaire ne reçoit pas les fiches par e-mail. Le fallback crée des prévisualisations (Ethereal) mais n'envoie pas d'e-mails externes.
+
+### Prochaine étape
+- Configurer les variables d'environnement `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` et `OWNER_EMAIL`, puis redémarrer le serveur (`npm start`) pour activer l'envoi réel d'e-mails.
+
+## [2026-04-27 09:10]
+
+### Objectif
+- Permettre une configuration simple des variables SMTP en développement via un fichier `.env`.
+
+### Fichiers modifiés / ajoutés
+- Ajout : `.env.example`
+- Modification : `server.js` (chargement de `dotenv` si présent)
+
+### Changements effectués
+- Ajout de `dotenv` comme dépendance et prise en charge du chargement de `.env` au démarrage.
+- Ajout d'un fichier `.env.example` décrivant les variables à renseigner pour activer l'envoi réel d'e-mails.
+
+### Prochaine étape
+- Copier `.env.example` en `.env`, renseigner vos identifiants SMTP et `OWNER_EMAIL`, puis exécuter `npm start`.
+
+## [2026-04-27 08:50]
+
+### Objectif
+- Ajouter persistance locale des soumissions et une page publique pour les consulter.
+
+### Fichiers modifiés / ajoutés
+- Modification : `server.js` (sauvegarde des soumissions + API `/api/submissions`)
+- Ajout : `submissions.html` (page frontend)
+- Ajout : `js/published.js` (script client pour la page)
+- Ajout : `submissions/.gitkeep`
+
+### Résumé des changements
+- À chaque POST `/send`, la soumission est désormais enregistrée dans `submissions/{id}.json`.
+- Deux endpoints API ajoutés :
+	- `GET /api/submissions` retourne la liste des métadonnées.
+	- `GET /api/submissions/:id` retourne la soumission complète.
+- Page utilisateur `submissions.html` permet de lister et lire les fiches publiées.
+
+### Décisions prises
+- Sauvegarde locale JSON simple (pas de base de données) pour un accès rapide et sans dépendances.
+
+### Bugs ou problèmes rencontrés
+- Aucune erreur majeure ; le serveur crée le dossier `submissions/` si nécessaire.
+
+### Prochaine étape recommandée
+- (Optionnel) Ajouter authentification / modération avant publication si nécessaire.
+- Tester la page `submissions.html` localement : http://localhost:3000/submissions.html
+
+## [2026-04-27 11:10]
+
+### Objectif
+- Fournir des permaliens publics pour chaque fiche publiée afin qu'elles puissent être consultées individuellement.
+
+### Fichiers modifiés
+- `server.js` : ajout de la route publique `/submissions/:id` pour rendre une page HTML par soumission
+- `js/published.js` : ajout de liens permaliens vers `/submissions/:id`
+
+### Résumé
+- Chaque fiche sauvegardée a désormais une URL publique `/submissions/{id}` qui affiche la fiche avec le style du site.
+
+### Prochaine étape
+- Vérifier l'accès aux permaliens via `http://localhost:3000/submissions/{id}` et ajuster le style si besoin.
+
+## [2026-04-27 11:30]
+
+### Objectif
+- Rendre la page `submissions.html` accessible depuis la page d'accueil.
+
+### Fichiers modifiés
+- `index.html` : ajout d'un lien visible vers `submissions.html` dans l'en-tête.
+
+### Résumé
+- Ajout d'un lien `Fiches publiées` dans l'en-tête de la page d'accueil pour faciliter l'accès public aux fiches.
+
+### Prochaine étape
+- Tester le lien depuis la page d'accueil et ajuster l'apparence si besoin.
+
+
+
+
 
 ## [2026-04-22 15:10]
 
@@ -355,6 +446,42 @@ Journal des actions réalisées avec l'aide de Copilot dans VS Code.
 
 ### Prochaine étape
 - Recharger la page dans le navigateur et vérifier le parcours complet. Ajuster les paddings/timings si nécessaire.
+
+## [2026-04-23 09:20]
+
+### Objectif
+- Permettre l'envoi d'e-mails de confirmation après soumission pour le participant et pour le propriétaire (admin) afin de centraliser et sauvegarder les fiches métier.
+
+### Fichiers modifiés / ajoutés
+- Ajout : `server.js`, `tests/e2e.js`
+- Modification : `package.json`, `js/main.js`, `IA_DEV_LOG.md`
+
+### Changements effectués
+- `server.js` : petit serveur Express qui sert les fichiers statiques et expose `POST /send` pour envoyer les e-mails via SMTP (nodemailer). Utilise les variables d'environnement : `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `OWNER_EMAIL`, optionnel `FROM_EMAIL`.
+- `js/main.js` : après génération de la fiche, requête POST vers `/send` avec `formData`, HTML et Markdown ; affichage d'un toast selon l'issue.
+- `package.json` : script `start` pour lancer `server.js` et `test:e2e` pour exécuter le test Puppeteer.
+
+### Décisions prises
+- Utiliser un serveur Node simple pour garder toute la logique d'envoi côté serveur et éviter d'exposer les identifiants SMTP côté client.
+- Les variables d'environnement sont requises pour la production (sécurité) ; par défaut le serveur signale l'absence de configuration.
+
+### Problèmes rencontrés
+- Nécessite la configuration d'un SMTP fonctionnel (ex : SMTP d'un provider ou mot de passe d'application Gmail). Pas d'envoi si les variables ne sont pas définies.
+
+### Prochaine étape
+- Démarrer le serveur avec `npm start` (au lieu du serveur Python). Exemple :
+
+```bash
+export SMTP_HOST=smtp.example.com
+export SMTP_PORT=587
+export SMTP_USER=you@example.com
+export SMTP_PASS=yourpassword
+export OWNER_EMAIL=owner@example.com
+npm start
+```
+
+Après démarrage, ouvrir `http://127.0.0.1:3000` et soumettre le formulaire pour tester l'envoi.
+
 
 
 
