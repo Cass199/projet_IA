@@ -13,7 +13,11 @@ async function renderList(){
       const li = document.createElement('li');
       li.innerHTML = `<strong>${it.role || 'Sans titre'}</strong> — ${it.name || 'Anonyme'} <em>(${fmtDate(it.timestamp)})</em> `;
       const btn = document.createElement('button'); btn.textContent = 'Voir'; btn.addEventListener('click', ()=>showDetail(it.id));
-      const link = document.createElement('a'); link.href = `/submissions/${encodeURIComponent(it.id)}`;
+      const link = document.createElement('a'); link.href = "#";
+link.addEventListener("click", (e) => {
+  e.preventDefault();
+  showDetail(it.id);
+});
       link.textContent = 'Permalien';
       link.style.marginLeft = '8px';
       link.target = '_blank';
