@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const md = generateMarkdown(formData);
         const html = sheet.outerHTML;
         const payload = { to: formData.email || null, data: formData, markdown: md, html };
-        const resp = await fetch('/send', {
+        const resp = await fetch('/api/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
