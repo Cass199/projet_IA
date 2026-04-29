@@ -48,7 +48,13 @@ function getTransport() {
 
   if (!host || !port || !user || !pass) return null;
 
-  return nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+  const opts = { host, port, secure, auth: { user, pass } };
+  try {
+    return nodemailer.createTransport(opts);
+  } catch (e) {
+    console.error('Failed to create SMTP transport', e && e.message ? e.message : e);
+    return null;
+  }
 }
 
 app.post('/send', async (req, res) => {
@@ -61,13 +67,27 @@ app.post('/send', async (req, res) => {
     const filename = path.join(SUBMISSIONS_DIR, `${id}.json`);
     try { fs.writeFileSync(filename, JSON.stringify(submission, null, 2)); } catch (e) { console.warn('Failed to persist submission', e && e.message ? e.message : e); }
     const owner = process.env.OWNER_EMAIL;
+    let ownerPreview = null;
+    let ownerMessageId = null;
+    let ownerSendResult = null;
     const from = process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-reply@example.com';
+    const envelopeFrom = process.env.SMTP_USER || from;
     if (!owner) console.warn('OWNER_EMAIL not configured — owner will not receive submissions via email.');
 
     let transport = getTransport();
     let usingTestAccount = false;
+    if (transport) {
+      try {
+        await transport.verify();
+        console.log('SMTP transport verified for', process.env.SMTP_USER || 'unknown user');
+      } catch (verifyErr) {
+        console.warn('SMTP transport verification failed:', verifyErr && verifyErr.message ? verifyErr.message : verifyErr);
+        transport = null;
+      }
+    }
+
     if (!transport) {
-      console.warn('SMTP configuration missing — creating Ethereal test account for development');
+      console.warn('SMTP configuration missing or invalid — creating Ethereal test account for development');
       // create ethereal test account for dev fallback
       const testAccount = await nodemailer.createTestAccount();
       transport = nodemailer.createTransport({ host: 'smtp.ethereal.email', port: 587, secure: false, auth: { user: testAccount.user, pass: testAccount.pass } });
@@ -83,26 +103,66 @@ app.post('/send', async (req, res) => {
 
     const attachments = [];
     if (markdown) attachments.push({ filename: `${(data && data.role ? data.role : 'fiche-metier').replace(/[^a-z0-9-_]+/ig,'-')}.md`, content: markdown });
-
-    let ownerPreview = null;
+    
     if (owner) {
-      const ownerInfo = await transport.sendMail({ from, to: owner, subject: ownerSubject, html: ownerHtml, attachments });
-      if (usingTestAccount) ownerPreview = nodemailer.getTestMessageUrl(ownerInfo) || null;
+      try {
+        const mailOpts = { from, to: owner, subject: ownerSubject, html: ownerHtml, attachments };
+        if (!usingTestAccount) mailOpts.envelope = { from: envelopeFrom, to: owner };
+        const ownerInfo = await transport.sendMail(mailOpts);
+        if (usingTestAccount) ownerPreview = nodemailer.getTestMessageUrl(ownerInfo) || null;
+        else if (ownerInfo && ownerInfo.messageId) { ownerMessageId = ownerInfo.messageId; console.log('Owner messageId:', ownerInfo.messageId); }
+          ownerSendResult = ownerInfo;
+          console.log('Owner send result:', ownerInfo && ownerInfo.response ? ownerInfo.response : ownerInfo);
+      } catch (ownerErr) {
+        console.error('Failed to send owner email', ownerErr && ownerErr.stack ? ownerErr.stack : ownerErr);
+        // if sending to owner failed with real SMTP, fallback to Ethereal for user preview
+        if (!usingTestAccount) {
+          try {
+            const testAccount = await nodemailer.createTestAccount();
+            transport = nodemailer.createTransport({ host: 'smtp.ethereal.email', port: 587, secure: false, auth: { user: testAccount.user, pass: testAccount.pass } });
+            usingTestAccount = true;
+          } catch (e) { console.warn('Ethereal fallback failed', e && e.message ? e.message : e); }
+        }
+      }
     }
 
     // Send confirmation to user if provided
+    var userPreview = null;
+    var userMessageId = null;
+     let userSendResult = null;
     if (to) {
-      const userSubject = `Confirmation : votre fiche métier (${data && data.role ? data.role : 'Sans titre'})`;
-      const userText = `Bonjour ${data && data.name ? data.name : ''},\n\nNous avons bien reçu votre fiche métier. Merci pour votre contribution.`;
-      const userInfo = await transport.sendMail({ from, to, subject: userSubject, text: userText });
-      var userPreview = null;
-      if (usingTestAccount) userPreview = nodemailer.getTestMessageUrl(userInfo) || null;
+      try {
+        const userSubject = `Confirmation : votre fiche métier (${data && data.role ? data.role : 'Sans titre'})`;
+        const userText = `Bonjour ${data && data.name ? data.name : ''},\n\nNous avons bien reçu votre fiche métier. Merci pour votre contribution.`;
+        const mailOpts2 = { from, to, subject: userSubject, text: userText };
+        if (!usingTestAccount) mailOpts2.envelope = { from: envelopeFrom, to };
+        const userInfo = await transport.sendMail(mailOpts2);
+        if (usingTestAccount) userPreview = nodemailer.getTestMessageUrl(userInfo) || null;
+        else if (userInfo && userInfo.messageId) { userMessageId = userInfo.messageId; console.log('User messageId:', userInfo.messageId); }
+          userSendResult = userInfo;
+          console.log('User send result:', userInfo && userInfo.response ? userInfo.response : userInfo);
+      } catch (userErr) {
+        console.error('Failed to send user confirmation', userErr && userErr.stack ? userErr.stack : userErr);
+      }
     }
 
     const result = { ok: true };
     // include saved id so clients can link to the published page
     result.id = id;
+     // update the saved submission with send status for diagnostics
+     try {
+       const savedRaw = fs.readFileSync(filename, 'utf8');
+       const saved = JSON.parse(savedRaw);
+       saved.sendStatus = { timestamp: new Date().toISOString(), owner: null, user: null };
+       if (ownerSendResult) saved.sendStatus.owner = { ok: true, messageId: ownerMessageId || null, response: ownerSendResult.response || null };
+       else if (owner) saved.sendStatus.owner = { ok: false, error: 'owner send not attempted or failed' };
+       if (userSendResult) saved.sendStatus.user = { ok: true, messageId: userMessageId || null, response: userSendResult.response || null };
+       else if (to) saved.sendStatus.user = { ok: false, error: 'user send not attempted or failed' };
+       fs.writeFileSync(filename, JSON.stringify(saved, null, 2));
+     } catch (e) { console.warn('Failed to update submission sendStatus', e && e.message ? e.message : e); }
     if (usingTestAccount) result.preview = { owner: ownerPreview, user: userPreview || null };
+    if (ownerMessageId) result.ownerMessageId = ownerMessageId;
+    if (userMessageId) result.userMessageId = userMessageId;
     return res.json(result);
   } catch (err) {
     console.error('Mail send error', err && err.stack ? err.stack : err);

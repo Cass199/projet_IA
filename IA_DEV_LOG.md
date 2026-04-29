@@ -428,6 +428,22 @@ Journal des actions réalisées avec l'aide de Copilot dans VS Code.
 ### Prochaine étape
 - (Recommandé) Ajouter une page d'administration avec formulaire de connexion sécurisé et TLS en production.
 
+## [2026-04-29 10:20]
+
+### Objectif
+- Renforcer la robustesse de l'envoi d'e-mails en production et améliorer le diagnostic en cas d'échec SMTP.
+
+### Fichiers modifiés
+- `server.js` : vérification du transport SMTP (`transport.verify()`), fallback vers Ethereal si la vérification échoue, gestion d'erreurs lors de l'envoi et logs améliorés. Le serveur renvoie désormais `messageId` pour les envois réels et les URLs de prévisualisation pour Ethereal.
+
+### Résumé
+- Le serveur tente d'abord d'utiliser la configuration SMTP fournie. Si `transport.verify()` échoue, il bascule vers un compte Ethereal et renvoie des URLs de prévisualisation (mode dev).
+- Les erreurs d'envoi sont désormais loggées en détail pour faciliter le diagnostic sur l'environnement de production.
+
+### Prochaine étape
+- Redémarrer le serveur avec vos variables SMTP configurées (déjà fait) et, si vous ne recevez toujours pas d'e-mails, m'envoyer les logs du serveur (console) afin que j'analyse la cause (auth, TLS, rejet par le provider, etc.).
+
+
 
 ### Prochaine étape
 - Ajouter authentification ou confirmation côté serveur si nécessaire.
