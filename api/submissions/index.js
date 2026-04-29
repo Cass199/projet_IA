@@ -1,41 +1,23 @@
-const fs = require("fs");
-const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
-const SUBMISSIONS_DIR = path.join(process.cwd(), "submissions");
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  try {
-    if (!fs.existsSync(SUBMISSIONS_DIR)) {
-      return res.json([]);
-    }
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("id,timestamp,name,role")
+    .order("timestamp", { ascending: false });
 
-    const files = fs.readdirSync(SUBMISSIONS_DIR).filter(f => f.endsWith(".json"));
-
-    const items = files
-      .map(f => {
-        try {
-          const raw = fs.readFileSync(path.join(SUBMISSIONS_DIR, f), "utf8");
-          const obj = JSON.parse(raw);
-
-          return {
-            id: obj.id,
-            timestamp: obj.timestamp,
-            name: obj.data?.name || null,
-            role: obj.data?.role || null
-          };
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
-
-    return res.json(items);
-  } catch (err) {
-    return res.status(500).json({ error: String(err) });
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
+
+  return res.json(data || []);
 };

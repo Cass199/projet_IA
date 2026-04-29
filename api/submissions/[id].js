@@ -1,26 +1,26 @@
-const fs = require("fs");
-const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
-const SUBMISSIONS_DIR = path.join(process.cwd(), "submissions");
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  try {
-    const { id } = req.query;
-    const file = path.join(SUBMISSIONS_DIR, `${id}.json`);
+  const { id } = req.query;
 
-    if (!fs.existsSync(file)) {
-      return res.status(404).json({ error: "Not found" });
-    }
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    const raw = fs.readFileSync(file, "utf8");
-    const obj = JSON.parse(raw);
-
-    return res.json(obj);
-  } catch (err) {
-    return res.status(500).json({ error: String(err) });
+  if (error) {
+    return res.status(404).json({ error: error.message });
   }
+
+  return res.json(data);
 };

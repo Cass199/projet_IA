@@ -1,3 +1,10 @@
+const { createClient } = require("@supabase/supabase-js");
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
@@ -29,7 +36,22 @@ module.exports = async function handler(req, res) {
     const { to, data, markdown, html } = req.body || {};
 
     const id = Date.now() + "-" + crypto.randomBytes(4).toString("hex");
+    const { error: insertError } = await supabase
+        .from("submissions")
+        .insert({
+            id,
+            recipient_email: to || null,
+            name: data?.name || null,
+            role: data?.role || null,
+            data: data || {},
+            markdown: markdown || "",
+            html: html || ""
+        });
 
+    if (insertError) {
+        throw new Error("Erreur Supabase insert: " + insertError.message);
+    }
+    
     const owner = process.env.OWNER_EMAIL;
     const from = process.env.FROM_EMAIL || process.env.SMTP_USER;
 
