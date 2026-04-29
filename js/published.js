@@ -79,7 +79,14 @@ async function showDetail(id){
     document.getElementById('delete').addEventListener('click', async ()=>{
       if(!confirm('Confirmer la suppression de cette fiche ?')) return;
       try{
-        const r = await fetch('/api/submissions/'+encodeURIComponent(id), { method: 'DELETE' });
+        const token = sessionStorage.getItem('adminAuth');
+
+const r = await fetch('/api/submissions/' + encodeURIComponent(id), {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Basic ' + token
+  }
+});
         if(!r.ok) throw new Error('Delete failed');
         renderList();
         document.getElementById('detail').innerHTML = '';
